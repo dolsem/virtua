@@ -16,6 +16,7 @@ import type {
   CacheSnapshot,
   InternalCacheSnapshot,
   ItemResize,
+  ItemSize,
   ItemsRange,
 } from "./types";
 import { abs, max, min, NULL } from "./utils";
@@ -126,7 +127,7 @@ export type VirtualStore = {
  */
 export const createVirtualStore = (
   elementsCount: number,
-  itemSize: number = 40,
+  itemSize: ItemSize = 40,
   overscan: number = 4,
   ssrCount: number = 0,
   cacheSnapshot?: CacheSnapshot | undefined,

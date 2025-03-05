@@ -22,6 +22,7 @@ import {
   ScrollToIndexOpts,
   microtask,
   sort,
+  ItemSize,
 } from "../core";
 import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 import { getKey, refKey } from "./utils";
@@ -113,7 +114,7 @@ export interface VirtualizerProps {
    * - If not set, initial item sizes will be automatically estimated from measured sizes. This is recommended for most cases.
    * - If set, you can opt out estimation and use the value as initial item size.
    */
-  itemSize?: number;
+  itemSize?: ItemSize;
   /**
    * While true is set, scroll position will be maintained from the end not usual start when items are added to/removed from start. It's recommended to set false if you add to/remove from mid/end of the list because it can cause unexpected behavior. This prop is useful for reverse infinite scrolling.
    */

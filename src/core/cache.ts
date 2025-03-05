@@ -1,8 +1,8 @@
-import { type InternalCacheSnapshot, type ItemsRange } from "./types";
+import { ItemSize, type InternalCacheSnapshot, type ItemsRange } from "./types";
 import { clamp, floor, max, min, sort } from "./utils";
 
 type Writeable<T> = {
-  -readonly [key in keyof T]: Writeable<T[key]>;
+  -readonly [key in keyof T]: T[key] extends object ? Writeable<T[key]> : T[key];
 };
 
 /** @internal */
@@ -15,7 +15,7 @@ export type Cache = {
   readonly _length: number;
   // sizes
   readonly _sizes: number[];
-  readonly _defaultItemSize: number;
+  readonly _defaultItemSize: ItemSize;
   // offsets
   readonly _computedOffsetIndex: number;
   readonly _offsets: number[];
@@ -34,7 +34,10 @@ const fill = (array: number[], length: number, prepend?: boolean): number[] => {
  */
 export const getItemSize = (cache: Cache, index: number): number => {
   const size = cache._sizes[index]!;
-  return size === UNCACHED ? cache._defaultItemSize : size;
+  if (size === UNCACHED) {
+    return typeof cache._defaultItemSize === 'function' ? cache._defaultItemSize(index) : cache._defaultItemSize;
+  }
+  return size;
 };
 
 /**
@@ -166,6 +169,13 @@ export const estimateDefaultItemSize = (
   // Discard cache for now
   cache._computedOffsetIndex = -1;
 
+  if (typeof cache._defaultItemSize === 'function') {
+    const length = max(startIndex - measuredCountBeforeStart, 0);
+    return Array.from({ length })
+      .map((_, ix) => ix + measuredCountBeforeStart)
+      .reduce((acc, i) => acc + (cache._defaultItemSize as Exclude<ItemSize, number>)(i))
+  }
+
   // Calculate median
   const sorted = sort(measuredSizes);
   const len = sorted.length;
@@ -187,7 +197,7 @@ export const estimateDefaultItemSize = (
  */
 export const initCache = (
   length: number,
-  itemSize: number,
+  itemSize: ItemSize,
   snapshot?: InternalCacheSnapshot
 ): Cache => {
   return {
@@ -221,7 +231,8 @@ export const updateCacheLength = (
   length: number,
   isShift?: boolean
 ): number => {
-  const diff = length - cache._length;
+  const currentLength = cache._length;
+  const diff = length - currentLength;
 
   cache._computedOffsetIndex = isShift
     ? // Discard cache for now
@@ -233,6 +244,11 @@ export const updateCacheLength = (
     // Added
     fill(cache._offsets, diff);
     fill(cache._sizes, diff, isShift);
+    if (typeof cache._defaultItemSize === 'function') {
+      return Array.from({ length: diff })
+        .map((_, ix) => ix + currentLength)
+        .reduce((acc, i) => acc + (cache._defaultItemSize as Exclude<ItemSize, number>)(i))
+    }
     return cache._defaultItemSize * diff;
   } else {
     // Removed
@@ -240,8 +256,11 @@ export const updateCacheLength = (
     return (
       isShift ? cache._sizes.splice(0, -diff) : cache._sizes.splice(diff)
     ).reduce(
-      (acc, removed) =>
-        acc - (removed === UNCACHED ? cache._defaultItemSize : removed),
+      (acc, removed, ix) => {
+        if (removed !== UNCACHED) return acc - removed;
+        if (typeof cache._defaultItemSize === 'function') return acc - cache._defaultItemSize(isShift ? ix : diff + ix);
+        return acc - cache._defaultItemSize;
+      },
       0
     );
   }
