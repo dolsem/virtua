@@ -23,4 +23,4 @@ export {
 } from "./resizer";
 export { isRTLDocument, isBrowser } from "./environment";
 export { microtask, sort } from "./utils";
-export type { CacheSnapshot, ScrollToIndexOpts, ItemsRange } from "./types";
+export type { CacheSnapshot, ScrollToIndexOpts, ItemsRange, ItemSize } from "./types";

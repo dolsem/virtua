@@ -3,8 +3,10 @@ export type ItemResize = Readonly<[index: number, size: number]>;
 /** @internal */
 export type ItemsRange = Readonly<[startIndex: number, endIndex: number]>;
 
+export type ItemSize = number | ((index: number) => number);
+
 /** @internal */
-export type InternalCacheSnapshot = [sizes: number[], defaultSize: number];
+export type InternalCacheSnapshot = [sizes: number[], defaultSize: ItemSize];
 
 declare const cacheSymbol: unique symbol;
 /**
