@@ -246,7 +246,7 @@ export const updateCacheLength = (
     fill(cache._sizes, diff, isShift);
     if (typeof cache._defaultItemSize === 'function') {
       return Array.from({ length: diff })
-        .map((_, ix) => ix + currentLength)
+        .map((_, ix) => isShift ? ix : ix + currentLength)
         .reduce((acc, i) => acc + (cache._defaultItemSize as Exclude<ItemSize, number>)(i))
     }
     return cache._defaultItemSize * diff;
